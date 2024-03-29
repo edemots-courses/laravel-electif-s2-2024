@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -14,7 +16,8 @@ class UserController extends Controller
     {
         $users = User::query()
             ->select(['id', 'name', 'email'])
-            ->orderBy('name', 'asc')
+            // ->orderBy('created_at', 'desc')
+            ->latest()
             ->paginate(10);
 
         return view('users.index', [
@@ -35,7 +38,21 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validatedData = $request->validate([
+            'name' => ['required'],
+            'email' => ['required', 'email'],
+        ]);
+
+        $validatedData['password'] = Str::random();
+
+        // $user = new User();
+        // $user->name = $validatedData['name'];
+        // $user->email = $validatedData['email'];
+        // $user->save();
+        User::create($validatedData);
+
+        return redirect()->route('users.index')
+            ->with('success', "L'utilisateur a bien été ajouté.");
     }
 
     /**
@@ -67,6 +84,9 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        //
+        $user->delete();
+
+        return redirect()->route('users.index')
+            ->with('success', "L'utilisateur {$user->name} a bien été supprimé.");
     }
 }
